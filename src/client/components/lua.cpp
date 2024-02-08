@@ -61,4 +61,4 @@ namespace lua
 	};
 }
 
-REGISTER_COMPONENT(lua::component)
+//REGISTER_COMPONENT(lua::component)

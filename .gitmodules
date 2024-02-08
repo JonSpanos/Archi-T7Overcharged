@@ -17,3 +17,9 @@
 [submodule "deps/discord-rpc"]
 	path = deps/discord-rpc
 	url = https://github.com/discord/discord-rpc.git
+[submodule "deps/wswrap"]
+	path = deps/wswrap
+	url = https://github.com/black-sliver/wswrap.git
+[submodule "deps/apclientpp"]
+	path = deps/apclientpp
+	url = https://github.com/black-sliver/apclientpp.git
