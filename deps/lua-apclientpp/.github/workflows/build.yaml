@@ -1,0 +1,81 @@
+name: Build All
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+
+  build-msys2:
+    uses: ./.github/workflows/build-msys2.yaml
+
+
+  build-msbuild:
+    uses: ./.github/workflows/build-msbuild.yaml
+
+
+  relink:
+    needs: [build-msys2, build-msbuild]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade machomachomangler mingw_ldd
+
+      - name: Load lua53-clang32-dynamic
+        uses: actions/download-artifact@v3
+        with:
+          name: lua-apclientpp-lua53-clang32-dynamic
+
+      - name: Patch 5.3 -> 5.3.3r
+        # TODO: convert this to a reusable workflow
+        run: |
+          mv lua-apclientpp.dll _lua-apclientpp.dll
+          python -m machomachomangler.cmd.redll _lua-apclientpp.dll lua-apclientpp.dll lua53.dll Lua5.3.3r.dll
+          python -m mingw_ldd lua-apclientpp.dll --dll-lookup-dirs . | grep lua
+
+      - name: Store lua533r-clang32-dynamic
+        uses: actions/upload-artifact@v3
+        with:
+          name: lua-apclientpp-lua533r-clang32-dynamic
+          path: lua-apclientpp.dll
+
+
+  license-copy-paste:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Copy Pasta
+        run: |
+          cat LICENSE > lua-apclientpp-license.txt
+          echo -e "\n\n# apclientpp\n" >> lua-apclientpp-license.txt
+          cat subprojects/apclientpp/LICENSE >> lua-apclientpp-license.txt
+          echo -e "\n\n# Asio C++ Library\n" >> lua-apclientpp-license.txt
+          cat subprojects/asio/COPYING >> lua-apclientpp-license.txt
+          echo -e "\n\n# JSON for Modern C++\n" >> lua-apclientpp-license.txt
+          cat subprojects/json/LICENSE.MIT >> lua-apclientpp-license.txt
+          echo -e "\n\n# Valijson\n" >> lua-apclientpp-license.txt
+          cat subprojects/valijson/LICENSE >> lua-apclientpp-license.txt
+          echo -e "\n\n# WebSocket++\n" >> lua-apclientpp-license.txt
+          cat subprojects/websocketpp/websocketpp/COPYING >> lua-apclientpp-license.txt
+          echo -e "\n\n# black-sliver/wswrap\n" >> lua-apclientpp-license.txt
+          cat subprojects/wswrap/LICENSE >> lua-apclientpp-license.txt
+
+      - name: Store
+        uses: actions/upload-artifact@v3
+        with:
+          name: lua-apclientpp-license
+          path: lua-apclientpp-license.txt
