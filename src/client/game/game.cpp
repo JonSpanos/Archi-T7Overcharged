@@ -11,6 +11,7 @@
 
 #include <string>
 #include <map>
+#include <ranges>
 
 namespace game
 {
